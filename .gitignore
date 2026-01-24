@@ -1,0 +1,6 @@
+/StocksR/StocksR/bin
+/StocksR/StocksR/obj
+/StocksR/.idea
+# JetBrains Rider / IntelliJ
+.idea/
+*.sln.iml
