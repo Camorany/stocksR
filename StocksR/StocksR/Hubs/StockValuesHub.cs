@@ -3,11 +3,11 @@ using StocksR.Models;
 
 namespace StocksR.Hubs;
 
-public sealed class StockValuesHub: Hub
+public interface IStockClient
 {
-    public async Task SendStockValueAsync(Stock stock)
-    {
-        await Clients.Caller.SendAsync("ReceiveStockValue", stock.Value);
-    } 
-    
+    Task SendStockValueAsync(Stock stock);
+}
+
+public sealed class StockValuesHub: Hub<IStockClient>
+{
 }
