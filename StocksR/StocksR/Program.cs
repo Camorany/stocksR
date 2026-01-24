@@ -10,23 +10,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 var apiKey = Environment.GetEnvironmentVariable("API_KEY");
 
-app.MapGet("/", (IHubContext<StockValuesHub, IStockClient> hubContext) =>
+app.MapGet("/", async (IHubContext<StockValuesHub, IStockClient> hubContext, HttpClient client) =>
 {
-    string QUERY_URL =
-        $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=AAPL&apikey={apiKey}";
-    
-        Uri queryUri = new Uri(QUERY_URL);
-    
-        using (WebClient client = new WebClient())
-        { 
-            dynamic json_data = JsonSerializer.Deserialize<Dictionary<string, dynamic>>(client.DownloadString(queryUri));
-            return json_data;
-        }
-    });
+    string queryUrl =
+        $"https://api.twelvedata.com/time_series?apikey={apiKey}&interval=1min&format=JSON&type=stock&symbol=MSFT";
+
+    Uri queryUri = new Uri(queryUrl);
+
+    var jsonData = JsonSerializer.Deserialize<Dictionary<string, dynamic>>(await client.GetStringAsync(queryUri));
+    return jsonData;
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
