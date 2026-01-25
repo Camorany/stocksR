@@ -3,6 +3,7 @@ namespace StocksR.Models;
 
 public class Stock
 {
-    public string StockName  { get; set; }
-    public int Value    { get; set; }
+    public StockMetaData Meta { get; set; }
+    public List<StockData> Values { get; set; }
+    public string Status { get; set; }
 }

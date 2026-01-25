@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.SignalR;
 using StocksR.Hubs;
+using StocksR.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,12 +19,15 @@ var apiKey = Environment.GetEnvironmentVariable("API_KEY");
 app.MapGet("/", async (IHubContext<StockValuesHub, IStockClient> hubContext, HttpClient client) =>
 {
     string queryUrl =
-        $"https://api.twelvedata.com/time_series?apikey={apiKey}&interval=1min&format=JSON&type=stock&symbol=MSFT";
+        $"https://api.twelvedata.com/time_series?apikey={apiKey}&interval=1min&format=JSON&type=stock&symbol=IBM";
 
     Uri queryUri = new Uri(queryUrl);
 
-    var jsonData = JsonSerializer.Deserialize<Dictionary<string, dynamic>>(await client.GetStringAsync(queryUri));
-    return jsonData;
+    var stock = JsonSerializer.Deserialize<Stock>(await client.GetStringAsync(queryUri));
+    
+    hubContext.Clients.All.StockValueUpdated(stock); 
+    
+    return stock;
 });
 
 // Configure the HTTP request pipeline.
