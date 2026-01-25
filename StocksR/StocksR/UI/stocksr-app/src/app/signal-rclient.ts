@@ -18,7 +18,7 @@ export class SignalRClient {
     .catch(err => console.log("Failed to connect to SignalR hub", err));
 
     this.hubConnection.on("StockValueUpdated", (stock) => {
-      console.log(`Stock details: ${stock}`)
+      console.log(`Stock details: ${JSON.stringify(stock)}`)
     });
   }
 }

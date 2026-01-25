@@ -9,6 +9,7 @@ import { SignalRClient } from './signal-rclient';
   styleUrl: './app.css'
 })
 export class App {
-  signalrService: SignalRClient = Inject(SignalRClient);
+  constructor(private signalRService: SignalRClient){}
+
   protected readonly title = signal('Hello World!');
 }

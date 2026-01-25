@@ -1,4 +1,3 @@
-using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.SignalR;
 using StocksR.Hubs;
@@ -10,10 +9,19 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
+builder.Services.AddCors();
 
 var app = builder.Build();
+
+app.UseCors(options => options.WithOrigins("http://localhost:4200")
+    .AllowAnyMethod()
+    .AllowCredentials()
+    .AllowAnyHeader());
+
+
 var apiKey = Environment.GetEnvironmentVariable("API_KEY");
 
 app.MapGet("/", async (IHubContext<StockValuesHub, IStockClient> hubContext, HttpClient client) =>
@@ -23,7 +31,14 @@ app.MapGet("/", async (IHubContext<StockValuesHub, IStockClient> hubContext, Htt
 
     Uri queryUri = new Uri(queryUrl);
 
-    var stock = JsonSerializer.Deserialize<Stock>(await client.GetStringAsync(queryUri));
+    var stockData = await client.GetStringAsync(queryUri);
+
+    var options = new JsonSerializerOptions
+    {
+        PropertyNameCaseInsensitive = true
+    };
+    
+    var stock =  JsonSerializer.Deserialize<Stock>(stockData, options);
     
     hubContext.Clients.All.StockValueUpdated(stock); 
     
