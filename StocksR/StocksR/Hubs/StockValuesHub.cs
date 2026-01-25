@@ -5,7 +5,7 @@ namespace StocksR.Hubs;
 
 public interface IStockClient
 {
-    Task SendStockValueAsync(Stock stock);
+    Task StockValueUpdated(Stock stock);
 }
 
 public sealed class StockValuesHub: Hub<IStockClient>
