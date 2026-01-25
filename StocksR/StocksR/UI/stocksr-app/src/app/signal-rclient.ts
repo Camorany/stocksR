@@ -5,7 +5,7 @@ import * as signalR from '@microsoft/signalr';
   providedIn: 'root',
 })
 export class SignalRClient {
-  private hubConnection: signalR.HubConnection;
+  public hubConnection: signalR.HubConnection;
 
   constructor() {
     this.hubConnection = new signalR.HubConnectionBuilder()
@@ -16,9 +16,5 @@ export class SignalRClient {
     this.hubConnection.start()
     .then(() => console.log("SignalR hub connected"))
     .catch(err => console.log("Failed to connect to SignalR hub", err));
-
-    this.hubConnection.on("StockValueUpdated", (stock) => {
-      console.log(`Stock details: ${JSON.stringify(stock)}`)
-    });
   }
 }

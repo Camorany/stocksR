@@ -1,4 +1,4 @@
-import { Component, Inject, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SignalRClient } from './signal-rclient';
 
@@ -8,8 +8,13 @@ import { SignalRClient } from './signal-rclient';
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App {
+export class App implements OnInit {
   constructor(private signalRService: SignalRClient){}
+  public title = signal("Waiting for stock info...");
 
-  protected readonly title = signal('Hello World!');
+  ngOnInit(){
+    this.signalRService.hubConnection.on("StockValueUpdated", (stock) => {
+      this.title.set(JSON.stringify(stock));
+    });
+  }
 }

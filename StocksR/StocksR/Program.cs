@@ -21,7 +21,6 @@ app.UseCors(options => options.WithOrigins("http://localhost:4200")
     .AllowCredentials()
     .AllowAnyHeader());
 
-
 var apiKey = Environment.GetEnvironmentVariable("API_KEY");
 
 app.MapGet("/", async (IHubContext<StockValuesHub, IStockClient> hubContext, HttpClient client) =>
@@ -38,7 +37,7 @@ app.MapGet("/", async (IHubContext<StockValuesHub, IStockClient> hubContext, Htt
         PropertyNameCaseInsensitive = true
     };
     
-    var stock =  JsonSerializer.Deserialize<Stock>(stockData, options);
+    var stock = JsonSerializer.Deserialize<Stock>(stockData, options);
     
     hubContext.Clients.All.StockValueUpdated(stock); 
     
