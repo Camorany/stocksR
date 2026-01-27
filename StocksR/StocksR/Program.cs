@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.SignalR;
+using StocksR.BackgroundServices;
 using StocksR.HttpClients;
 using StocksR.Hubs;
 using StocksR.Models;
@@ -16,8 +17,11 @@ builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
 builder.Services.AddCors();
 
+builder.Services.AddSingleton<ActiveTickerManager>();
+builder.Services.AddSingleton<PriceUpdateOptions>();
 builder.Services.AddHttpClient<StocksClient>();
 builder.Services.AddScoped<StockService>();
+builder.Services.AddHostedService<StockPriceUpdater>();
 
 var app = builder.Build();
 
@@ -27,7 +31,7 @@ app.UseCors(options => options.WithOrigins("http://localhost:4200")
     .AllowAnyHeader());
 
 app.MapGet("/stockPrice/{ticker}", async (string ticker, IHubContext<StockValuesHub, 
-    IStockHubClient> hubContext, StockService stockService) =>
+    IStockHubClient> hubContext, StockService stockService, ActiveTickerManager tickerManager) =>
 {
     LatestStockPrice? stockData = await stockService.GetLatestStockPrice(ticker);
     
@@ -36,7 +40,9 @@ app.MapGet("/stockPrice/{ticker}", async (string ticker, IHubContext<StockValues
         return Results.NotFound($"No data was found for stock: {ticker}");
     }
     
-    await hubContext.Clients.All.StockValueUpdated(stockData); 
+    tickerManager.AddActiveTicker(ticker);
+    
+    // await hubContext.Clients.All.StockValueUpdated(stockData); 
     
     return Results.Ok(stockData);
 });

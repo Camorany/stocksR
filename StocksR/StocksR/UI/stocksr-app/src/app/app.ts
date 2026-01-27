@@ -15,6 +15,7 @@ export class App implements OnInit {
   ngOnInit(){
     this.signalRService.hubConnection.on("StockValueUpdated", (stock) => {
       this.title.set(JSON.stringify(stock));
+      console.log(`New stock price received: ${JSON.stringify(stock)}`)
     });
   }
 }
