@@ -26,14 +26,19 @@ app.UseCors(options => options.WithOrigins("http://localhost:4200")
     .AllowCredentials()
     .AllowAnyHeader());
 
-app.MapGet("/", async (IHubContext<StockValuesHub, 
+app.MapGet("/stockPrice/{ticker}", async (string ticker, IHubContext<StockValuesHub, 
     IStockHubClient> hubContext, StockService stockService) =>
 {
-    var stockData = await stockService.GetLatestStockPrice("IBM");
+    LatestStockPrice? stockData = await stockService.GetLatestStockPrice(ticker);
     
-    hubContext.Clients.All.StockValueUpdated(stockData); 
+    if (stockData is null)
+    {
+        return Results.NotFound($"No data was found for stock: {ticker}");
+    }
     
-    return stockData;
+    await hubContext.Clients.All.StockValueUpdated(stockData); 
+    
+    return Results.Ok(stockData);
 });
 
 // Configure the HTTP request pipeline.

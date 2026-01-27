@@ -12,7 +12,7 @@ public class StockService
         stocksClient = client;
     }
 
-    public async Task<LatestStockPrice> GetLatestStockPrice(string ticker)
+    public async Task<LatestStockPrice?> GetLatestStockPrice(string ticker)
     {
         try
         {
