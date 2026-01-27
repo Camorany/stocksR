@@ -3,11 +3,11 @@ using StocksR.Models;
 
 namespace StocksR.Hubs;
 
-public interface IStockClient
+public interface IStockHubClient
 {
-    Task StockValueUpdated(Stock stock);
+    Task StockValueUpdated(LatestStockPrice latestStockPrice);
 }
 
-public sealed class StockValuesHub: Hub<IStockClient>
+public sealed class StockValuesHub: Hub<IStockHubClient>
 {
 }

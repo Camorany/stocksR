@@ -1,7 +1,9 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.SignalR;
+using StocksR.HttpClients;
 using StocksR.Hubs;
 using StocksR.Models;
+using StocksR.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +16,9 @@ builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
 builder.Services.AddCors();
 
+builder.Services.AddHttpClient<StocksClient>();
+builder.Services.AddScoped<StockService>();
+
 var app = builder.Build();
 
 app.UseCors(options => options.WithOrigins("http://localhost:4200")
@@ -21,27 +26,14 @@ app.UseCors(options => options.WithOrigins("http://localhost:4200")
     .AllowCredentials()
     .AllowAnyHeader());
 
-var apiKey = Environment.GetEnvironmentVariable("API_KEY");
-
-app.MapGet("/", async (IHubContext<StockValuesHub, IStockClient> hubContext, HttpClient client) =>
+app.MapGet("/", async (IHubContext<StockValuesHub, 
+    IStockHubClient> hubContext, StockService stockService) =>
 {
-    string queryUrl =
-        $"https://api.twelvedata.com/time_series?apikey={apiKey}&interval=1min&format=JSON&type=stock&symbol=IBM";
-
-    Uri queryUri = new Uri(queryUrl);
-
-    var stockData = await client.GetStringAsync(queryUri);
-
-    var options = new JsonSerializerOptions
-    {
-        PropertyNameCaseInsensitive = true
-    };
+    var stockData = await stockService.GetLatestStockPrice("IBM");
     
-    var stock = JsonSerializer.Deserialize<Stock>(stockData, options);
+    hubContext.Clients.All.StockValueUpdated(stockData); 
     
-    hubContext.Clients.All.StockValueUpdated(stock); 
-    
-    return stock;
+    return stockData;
 });
 
 // Configure the HTTP request pipeline.
