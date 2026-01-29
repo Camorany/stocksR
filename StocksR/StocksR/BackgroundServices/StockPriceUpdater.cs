@@ -12,6 +12,7 @@ internal sealed class StockPriceUpdater(
     PriceUpdateOptions options,
     ActiveTickerManager tickerManager): BackgroundService
 {
+    private int _index = -1;
     protected override async Task ExecuteAsync(CancellationToken token)
     {
         while (!token.IsCancellationRequested)
@@ -23,21 +24,35 @@ internal sealed class StockPriceUpdater(
 
     private async Task UpdateStockPrices()
     {
-        using (IServiceScope serviceScope = serviceScopeFactory.CreateScope())
+        if (tickerManager.GetAllActiveTickers().Count > 0)
         {
-            StockService stockService = serviceScope.ServiceProvider.GetRequiredService<StockService>();
-
-            foreach (var ticker in tickerManager.GetAllActiveTickers())
+            using (IServiceScope serviceScope = serviceScopeFactory.CreateScope())
             {
-                LatestStockPrice? tickerStockPrice = await stockService.GetLatestStockPrice(ticker);
-                if (tickerStockPrice == null)
+                StockService stockService = serviceScope.ServiceProvider.GetRequiredService<StockService>();
+
+                foreach (var ticker in tickerManager.GetAllActiveTickers())
                 {
-                    continue;
-                }
+                    LatestStockPrice? tickerStockPrices = await stockService.GetLatestStockPrice(ticker);
+                    if (tickerStockPrices == null)
+                    {
+                        continue;
+                    }
+                    
+                    if (_index == -1)
+                    {
+                        _index = tickerStockPrices.Prices.Count - 2;
+                    }
                 
-                await hubContext.Clients.All.StockValueUpdated(tickerStockPrice);
+                    await hubContext.Clients.All.StockValueUpdated(
+                        new StockPrice
+                        {
+                            Ticker  = tickerStockPrices.Ticker,
+                            TickerPrice = tickerStockPrices.Prices[_index]
+                        });
+                }
+
+                _index -= 1;
             }
-            
         }
     }
 }

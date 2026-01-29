@@ -42,7 +42,11 @@ app.MapGet("/stockPrice/{ticker}", async (string ticker, IHubContext<StockValues
     
     tickerManager.AddActiveTicker(ticker);
     
-    // await hubContext.Clients.All.StockValueUpdated(stockData); 
+    await hubContext.Clients.All.StockValueUpdated(new StockPrice
+        {
+            Ticker  = stockData.Ticker,
+            TickerPrice = stockData.Prices[stockData.Prices.Count - 1]
+        }); 
     
     return Results.Ok(stockData);
 });

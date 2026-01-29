@@ -27,7 +27,7 @@ public class StockService
             LatestStockPrice latestPrice = new LatestStockPrice
             {
                 Ticker = ticker,
-                Price = decimal.Parse(stockData.Values.FirstOrDefault().Open)
+                Prices = stockData.Values.Select(v => decimal.Parse(v.Open)).ToList()
             };
 
             return latestPrice;
