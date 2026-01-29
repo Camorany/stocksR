@@ -22,6 +22,7 @@ builder.Services.AddSingleton<PriceUpdateOptions>();
 builder.Services.AddHttpClient<StocksClient>();
 builder.Services.AddScoped<StockService>();
 builder.Services.AddHostedService<StockPriceUpdater>();
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 

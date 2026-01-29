@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using StocksR.Hubs;
 using StocksR.Models;
@@ -10,7 +11,8 @@ internal sealed class StockPriceUpdater(
     IHubContext<StockValuesHub, IStockHubClient> hubContext,
     IServiceScopeFactory serviceScopeFactory,
     PriceUpdateOptions options,
-    ActiveTickerManager tickerManager): BackgroundService
+    ActiveTickerManager tickerManager,
+    IMemoryCache cache): BackgroundService
 {
     private int _index = -1;
     protected override async Task ExecuteAsync(CancellationToken token)
@@ -32,23 +34,41 @@ internal sealed class StockPriceUpdater(
 
                 foreach (var ticker in tickerManager.GetAllActiveTickers())
                 {
-                    LatestStockPrice? tickerStockPrices = await stockService.GetLatestStockPrice(ticker);
-                    if (tickerStockPrices == null)
+                    
+                    if (cache.TryGetValue<List<decimal>>(ticker, out var latestPrice))
                     {
-                        continue;
+                        if (_index == -1)
+                        {
+                            _index = latestPrice.Count - 2;
+                        }
+                        await hubContext.Clients.All.StockValueUpdated(
+                            new StockPrice
+                            {
+                                Ticker  = ticker,
+                                TickerPrice = latestPrice[_index]
+                            });
+                    }
+                    else
+                    {
+                        LatestStockPrice? tickerStockPrices = await stockService.GetLatestStockPrice(ticker);
+                        if (tickerStockPrices == null)
+                        {
+                            continue;
+                        }
+                        
+                        if (_index == -1)
+                        {
+                            _index = tickerStockPrices.Prices.Count - 2;
+                        }
+                
+                        await hubContext.Clients.All.StockValueUpdated(
+                            new StockPrice
+                            {
+                                Ticker  = tickerStockPrices.Ticker,
+                                TickerPrice = tickerStockPrices.Prices[_index]
+                            });
                     }
                     
-                    if (_index == -1)
-                    {
-                        _index = tickerStockPrices.Prices.Count - 2;
-                    }
-                
-                    await hubContext.Clients.All.StockValueUpdated(
-                        new StockPrice
-                        {
-                            Ticker  = tickerStockPrices.Ticker,
-                            TickerPrice = tickerStockPrices.Prices[_index]
-                        });
                 }
 
                 _index -= 1;
